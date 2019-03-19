@@ -2,6 +2,7 @@
 class Observer {
     constructor(data) {
         console.log(data)
+        this.$data = data
         // 对data进行响应式定义劫持
         this.observer(data);
     }
@@ -30,8 +31,9 @@ class Observer {
             },
             set: function (newValue) {
                 if (newValue !== obj[key]) {
+                    // 如果newValue是一个对象,也需要把这个对象添加到响应式劫持里面
+                    that.observer(newValue)
                     value = newValue
-                    console.log("改变了")
                 }
             }
 
