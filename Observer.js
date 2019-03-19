@@ -1,32 +1,40 @@
+// 数据劫持
 class Observer {
-    constructor(data){
+    constructor(data) {
         console.log(data)
+        // 对data进行响应式定义劫持
+        this.observer(data);
     }
-    // 判断传入的是不是对象，如果是对象的话，那么就进行劫持监听
-    observer (data) {
-        if(data &&typeof data == "object") {
-            for(let key in  data){
-                this.defineReactive(data,key,data[key])
-            }
+
+    // 核心方法
+    observer(data) {
+        if (data && typeof data === "object") {
+            console.log("data是一个对象")
+            // 开始数据劫持
+            // 需要进行遍历劫持
+            Object.keys(data).forEach(key => {
+
+                this.defineReactive(data, key, data[key]);
+                // 递归调用进行不断的劫持深层的对象
+     
+                this.observer(data[key])
+            })
         }
     }
-    // 响应式监听
-    defineReactive(data,key,value){
-        Object.defineProperty(data, key,{ 
-            set:function(newValue){
-                console.log(newValue)
-                data[key] = newValue
-            },
-            get:function(){
+    defineReactive(obj, key, value) {
+        let that = this
+
+        Object.defineProperty(obj, key, {
+            get: function () {
                 return value;
+            },
+            set: function (newValue) {
+                if (newValue !== obj[key]) {
+                    value = newValue
+                    console.log("改变了")
+                }
             }
+
         })
     }
-
-
-
-
-
-
-
 }
