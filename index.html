@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="app">
+        <input type="text" v-model="title.msg">
+        {{title.msg}}
+        {{name}}
+    </div>
+    <!-- 引入数据劫持 -->
+    <script src="Observer.js"></script>
+    <!-- 引入模板编译类 -->
+    <script src="Complier.js"></script>
+    <!-- 引入类MVVM.js -->
+    <script src="MVVM.js"></script>
+    <script>
+        let App = new MVVM({
+            // el: "#app",
+            el:document.getElementById("app"),
+            data: {
+                title: {
+                    msg: "MVVM原理编译",
+                },
+                name:"小明"
+            }
+        })
+    </script>
+</body>
+
+</html>
