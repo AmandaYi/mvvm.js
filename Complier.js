@@ -16,18 +16,21 @@ class Compiler {
             // 如果是个字符串,那么用方法寻找
             this.el = document.querySelector(el)
         }
-        console.log(this.el)
-        // 2. 把全部的元素移入到内存中进行操作
-        let fragElement = this.nodeToFragElement(this.el)
-        // 输出检查是不是已经把原始DOM中的节点移入到内存中了,
-        // 是否DOM中el元素下面没有内容了
-        // 能否在内存中打印出来元素切片DOM
-        console.log(fragElement)
-        // 3. 在内容中对节点的内容进行元素的替换,编译模板或者数据编译
-        // 用一个方法把内容DOM切片中元素进行元素替换
-        this.complie(fragElement);
-        // 4. 把内容中处理好的文档片段放入到页面中
-        this.el.appendChild(fragElement)
+        // console.log(this.el)
+        if (this.el) {
+            // 2. 把全部的元素移入到内存中进行操作
+            let fragElement = this.nodeToFragElement(this.el)
+            // 输出检查是不是已经把原始DOM中的节点移入到内存中了,
+            // 是否DOM中el元素下面没有内容了
+            // 能否在内存中打印出来元素切片DOM
+            // console.log(fragElement)
+            // 3. 在内容中对节点的内容进行元素的替换,编译模板或者数据编译
+            // 用一个方法把内容DOM切片中元素进行元素替换
+            this.complie(fragElement);
+            // 4. 把内容中处理好的文档片段放入到页面中
+            this.el.appendChild(fragElement)
+        }
+
     }
 
 
@@ -71,57 +74,45 @@ class Compiler {
                 // 同时遍历到最后一个元素的时候，如果是文本的话，
                 // 用文本处理就行
                 this.complieText(item)
-                // console.log("使用文本处理")
             }
         })
     }
-    // 模板解析函数处理问题元素
-    complieText(text) {
-        // 查看是不是模板字符串的标记，如果过是的话，用通用函数去处理，如果不是的话，直接显示
-        let content = text.textContent;
-        // console.log("处理文本")
-        // 这里匹配的是content，而不是text
-        if (isBrackets.test(content) == true) {
-            // console.log("调用第三方函数处理")
-            // 调用函数去处理，
-            CompliUtil["text"](text, content, this.vm)
-        }
-        // 不是的话。不用管
-    }
-
     // 处理一些属性指令
     complieElement(child) {
         // console.log(child)
         // 1.查看child元素有多少个属性， 
         let attrs = child.attributes;
         // 2.对每个属性都进行判断，
-        Array.from(attrs).forEach(att => {
+        Array.from(attrs).forEach(attr => {
             // 得到属性名，属性值
-            let attrName = att.name;
-            let attrValue = att.value
-            // console.log(attrName)
-            // console.log(value)
+            let attrName = attr.name;
+            let attrValue = attr.value
             // 3.如果属性有是v-开头的，那么就是指令
             if (isDirective(attrName) == true) {
-                // 4.然后使用对应的第三方的函数进行处理
-                // console.log(att)
-                // console.log(attrName)
-                // console.log(attrValue)
-                // 获取指令
+                // 4.然后使用对应指令解析函数进行处理
                 // 然后把得到的v-后面的一部分传给第三方函数进行处理
-                let directive = attrName.split("-")[1]
-                // v-html
-                // v-model
-                // 如果是v-bind:on，那么怎么办呢？ bind:on切分
-                // 得到指令的类型 bind,html这一类的
-                let directiveType = directive.split(":")[0]
-                // 得到指令的值， 一个回掉什么的
-                let directiveValue = directive.split(":")[1]
-                // 因为model不需要directiveValue的吗，所以放到最后
+                let [_, directive] = attrName.split("-")
+                // 使用 : 拆分可能有2种结果, 
+                // 如果是html,那么会得到 [html,undefined]
+                // 如果是bind:on,那么会得到 [bind,on]
+                let [directiveType, directiveValue] = directive.split(":")
+                // 因为比如html,model等不需要directiveValue的，所以放到最后,
+                // 开始-----------------------------------------函数解析
                 CompliUtil[directiveType](child, attrValue, this.vm, directiveValue)
 
             }
         })
+    }
+
+    // 模板解析函数处理问题元素
+    complieText(text) {
+        // 查看是不是模板字符串的标记，如果过是的话，用通用函数去处理，如果不是的话，直接显示
+        let content = text.textContent;
+        // 这里匹配的是content，而不是text
+        if (isBrackets.test(content) == true) {
+            // 开始-----------------------------------------函数解析
+            CompliUtil["text"](text, content, this.vm)
+        }
     }
 
 }
@@ -129,44 +120,28 @@ class Compiler {
 const CompliUtil = {
     // 得到数据
     getValue(content, vm) {
-
         // 如果数据是title.msg是一个对象，那么需要不停的遍历下去进行取值
         return content.split(".").reduce((data, currentData) => {
-            // console.log(data)
             return data[currentData]
         }, vm.$data)
     },
-    // 编译文本
-    "text": function (textNode, content, vm) {
-        // console.log(text)
-        // console.log(content)  // {{title.msg}} {{name}}
-        // console.log(vm)
-        // this.getValue("title.msg", vm)
-        // 去掉模板字符{{}}
-        let v = content.replace(/\{\{(.+?)\}\}/img, (oldValue, newValue) => {
-            // 替换之前的值
-            // console.log(oldValue)
-            // // 替换之后的值
-            // console.log(newValue)
+    // 得到文本{{}}的值
+    getTextValue(content, vm) {
+        return content.replace(/\{\{(.+?)\}\}/img, (_, newValue) => {
             return this.getValue(newValue, vm)
         })
-        this.domUpdate["textUpdate"](textNode, v)
-
     },
-    // 实现model
+    // 编译文本,content是一个表达式, {{a}} {{b}} ...
+    "text": function (textNode, content, vm) {
+        // 去掉模板字符{{}}
+        let v = this.getTextValue(content, vm)
+        this.domUpdate["textUpdate"](textNode, v)
+    },
+    // model
     // directiveValue指令的值可以没有
     "model": function (child, attrValue, vm) {
-        // console.log(child)
-        // console.log(attrValue)
-        // console.log(vm)
         let v = this.getValue(attrValue, vm)
         // 监听输入事件
-        // child.addEventListener("input",(e)=>{
-        //     console.log(e.target.value);
-            
-        //     vm.$data.title.msg = e.target.value
-           
-        // })
         this.domUpdate["modelUpdate"](child, v)
     },
     // 处理页面更新
