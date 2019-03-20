@@ -121,8 +121,8 @@ const CompliUtil = {
     // 得到数据
     getValue(content, vm) {
         // 如果数据是title.msg是一个对象，那么需要不停的遍历下去进行取值
-        return content.split(".").reduce((data, currentData) => {
-            return data[currentData]
+        return content.split(".").reduce((prev, next) => {
+            return prev[next]
         }, vm.$data)
     },
     // 得到文本{{}}的值
@@ -133,16 +133,46 @@ const CompliUtil = {
     },
     // 编译文本,content是一个表达式, {{a}} {{b}} ...
     "text": function (textNode, content, vm) {
+        let textUpdate = this.domUpdate["textUpdate"]
         // 去掉模板字符{{}}
         let v = this.getTextValue(content, vm)
-        this.domUpdate["textUpdate"](textNode, v)
+        textUpdate(textNode, v)
+
+        // 在此处创建一个观察者,因为匹配到content可能是{{a}}{{b}}等等
+        // 所以要用正则
+        // 同时,用replace匹配的时候,当匹配到一个小分组的时候,会执行一下replace的回调,意思是匹配到几次回调几次
+        content.replace(/\{\{([^}]+)\}\}/, (...args) => {
+            // 这里进行创建一个观察者,当分组{{a}}的时候,进行观察,以此类推
+            // console.log(args) // 第二个值是去掉{{}}的
+            new Watcher(vm, args[1], () => {
+                // 当{{a}} 这里面的值改变的话,其他地方将会通知watcher的实例化,然后调用new Watcher的方法update进行更新,
+                // 因为update里面刚好执行了这个callback方法,所以这里面的回调函数就会执行,也就是更新了数据
+
+                // 首先重新获取一下值
+                let v = this.getTextValue(content, vm)
+                // 更新
+                textUpdate(textNode, v)
+            })
+        })
+
     },
     // model
     // directiveValue指令的值可以没有
     "model": function (child, attrValue, vm) {
         let v = this.getValue(attrValue, vm)
         // 监听输入事件
-        this.domUpdate["modelUpdate"](child, v)
+        let modelUpdate = this.domUpdate["modelUpdate"]
+
+        modelUpdate && modelUpdate(child, v)
+
+        // 这里创建一个观察实例,同时,重新获取一下新值
+        new Watcher(vm, v, () => {
+            // 当值变化的时候,才会自动执行这个回调方法进行重新获取新值,然后更新新值
+            let v = this.getValue(attrValue, vm)
+            modelUpdate && modelUpdate(child, v)
+        })
+
+
     },
     // 处理页面更新
     domUpdate: {
