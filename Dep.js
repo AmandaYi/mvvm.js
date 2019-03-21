@@ -6,13 +6,13 @@ class Dep {
 
     // 增加一个观察者实例
     addSubs(oneWatcher) {
-        console.log("走到这里了")
+        // console.log("走到这里了")
         this.subs.push(oneWatcher);
     }
     // 通知全部人, 应该是数据劫持的时候调用这个,比如set的时候会调用这个然后才会触发watcher的更新方法,最后走了text,model这些方法
     emitAll(){
         this.subs.forEach(watcher=>{
-            console.log("数据更新了")
+            // console.log("数据更新了")
             watcher.update()
         })
     }

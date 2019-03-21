@@ -6,16 +6,16 @@ class Watcher {
         this.expr = expr;
         this.callbackSet = callbackSet;
         // 创建的watcher的时候把当前的这个this挂载到Dep上面
-        this.initWatcher()
+        // this.initWatcher()
         // 创建一个新的观察者的时候,首先获取原始(上次)的值,因为观察者可能调用很多次
 
         this.initValue = this.getInitValue()
     }
     initWatcher() {
-        console.log("init Watcher")
+        // console.log("init Watcher")
         Dep.target = this;
-        console.log(this)
-        console.log( Dep.target )
+
+        // console.log( Dep.target )
 
     }
     getInitValue() {
@@ -29,7 +29,7 @@ class Watcher {
         // let v = this.getTextValue(content, vm)
         // textUpdate(textNode, v)
         let v = this.getValue(this.vm, this.expr)
-        Dep.target = null
+        // Dep.target = null
         return v
     }
     // 获取值

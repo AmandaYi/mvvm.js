@@ -11,7 +11,10 @@
 <body>
     <div id="app">
         <input type="text" v-model="title.msg">
+        <input type="text" v-model="title.msg2">
         {{title.msg}}
+        测试2
+        {{title.msg2}}
         {{name}}
     </div>
     <script src="Dep.js"></script>
@@ -30,6 +33,7 @@
             data: {
                 title: {
                     msg: "MVVM原理编译",
+                    msg2:"我是测试的"
                 },
                 name:"小明"
             }

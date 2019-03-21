@@ -131,42 +131,56 @@ const CompliUtil = {
             return this.getValue(newValue, vm)
         })
     },
+    setValue(vm, expr, value) { //vm.$data 'school.name'  =  姜文
+        expr.split('.').reduce((data, current, index, arr) => {
+            if (index == arr.length - 1) {
+                return data[current] = value;
+            }
+            return data[current];
+        }, vm.$data);
+    },
     // 编译文本,content是一个表达式, {{a}} {{b}} ...
     "text": function (textNode, content, vm) {
-        let textUpdate = this.domUpdate["textUpdate"]
+        // console.log(textNode)
         // 去掉模板字符{{}}
         let v = this.getTextValue(content, vm)
-        textUpdate(textNode, v)
-
-        // 在此处创建一个观察者,因为匹配到content可能是{{a}}{{b}}等等
-        // 所以要用正则
-        // 同时,用replace匹配的时候,当匹配到一个小分组的时候,会执行一下replace的回调,意思是匹配到几次回调几次
-        content.replace(/\{\{([^}]+)\}\}/, (...args) => {
-            // 这里进行创建一个观察者,当分组{{a}}的时候,进行观察,以此类推
-            // console.log(args) // 第二个值是去掉{{}}的
+        // console.log(v)
+        let textUpdate = this.domUpdate["textUpdate"]
+        content.replace(/\{\{(.+?)\}\}/, (...args) => {
             new Watcher(vm, args[1], () => {
-                // 当{{a}} 这里面的值改变的话,其他地方将会通知watcher的实例化,然后调用new Watcher的方法update进行更新,
-                // 因为update里面刚好执行了这个callback方法,所以这里面的回调函数就会执行,也就是更新了数据
-
-                // 首先重新获取一下值
-                let v = this.getTextValue(content, vm)
-                // 更新
-                textUpdate(textNode, v)
+                textUpdate(textNode, this.getTextValue(content, vm))
             })
+            return this.getValue(args[1], vm)
         })
+        textUpdate(textNode, v)
 
     },
     // model
     // directiveValue指令的值可以没有
-    "model": function (child, attrValue, vm) {
+    "model": function (child, expr, vm) {
+        let fn = this.domUpdate['modelUpdate'];
+        new Watcher(vm, expr, (newVal) => { // 给输入框加一个观察者 如果稍后数据更新了会触发此方法，会拿新值 给输入框赋予值
+            fn(child, newVal);
+        });
+        child.addEventListener('input', (e) => {
+            let value = e.target.value; // 获取用户输入的内容
+            this.setValue(vm, expr, value);
+        })
+        let value = this.getValue(expr, vm); // 珠峰
+        fn(child, value);
+        return
+        console.log("1")
         let v = this.getValue(attrValue, vm)
-        // 监听输入事件
         let modelUpdate = this.domUpdate["modelUpdate"]
-
+        console.log(child)
         modelUpdate && modelUpdate(child, v)
-
-        // 这里创建一个观察实例,同时,重新获取一下新值
+        child.addEventListener('input', (e) => {
+            let value = e.target.value; // 获取用户输入的内容
+            modelUpdate && modelUpdate(child, value);
+        })
+        // // 这里创建一个观察实例,同时,重新获取一下新值
         new Watcher(vm, v, () => {
+            // console.log("model")
             // 当值变化的时候,才会自动执行这个回调方法进行重新获取新值,然后更新新值
             let v = this.getValue(attrValue, vm)
             modelUpdate && modelUpdate(child, v)
@@ -181,6 +195,7 @@ const CompliUtil = {
             textNode.textContent = value
         },
         modelUpdate: function (inputNode, value) {
+            console.log(1);
             inputNode.value = value
         }
 

@@ -30,16 +30,17 @@ class Observer {
                 // 第一次数据劫持的时候,需要把当前的this放入进去
                 // 这里是第一次new Watcher的时候,会走这里
                 // 所以可以直接Dep订阅这里
-                Dep.target && dep.addSubs(Dep.target)
+             Dep.target &&   dep.addSubs(Dep.target) 
+           
                 // console.log(  Dep.target )
                 return value;
             },
             set: function (newValue) {
-             
-                if (newValue !== obj[key]) {
+
+                if (newValue != value) {
                     // 如果newValue是一个对象,也需要把这个对象添加到响应式劫持里面
-                    that.observer(newValue)
                     value = newValue
+                    that.observer(newValue)
                     // 这里值一旦变化,需要发布只需要调用emitAll方法,通知所有人,数据更新了, 
                     dep.emitAll()
                 }
